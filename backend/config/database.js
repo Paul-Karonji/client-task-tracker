@@ -1,30 +1,49 @@
+// backend/config/database.js
 const mysql = require('mysql2/promise');
-require('dotenv').config();
 
-const dbConfig = {
+// Load .env only in local dev; Render injects env vars directly
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
+// TiDB Serverless requires TLS
+const useTLS = String(process.env.DB_SSL || '').toLowerCase() === 'true';
+const ssl =
+  useTLS
+    ? (process.env.DB_CA_CERT
+        // If you add the PEM contents of the CA cert to DB_CA_CERT, we'll use it.
+        ? { minVersion: 'TLSv1.2', rejectUnauthorized: true, ca: process.env.DB_CA_CERT }
+        // Otherwise rely on system CAs (often fine on Render).
+        : { minVersion: 'TLSv1.2', rejectUnauthorized: true })
+    : undefined;
+
+const pool = mysql.createPool({
   host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT || 3306),
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
+
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: Number(process.env.DB_POOL_SIZE || 10),
   queueLimit: 0,
-  acquireTimeout: 60000,
-  timeout: 60000
-};
 
-const pool = mysql.createPool(dbConfig);
+  // mysql2 valid timeout option (avoid warnings about acquireTimeout/timeout)
+  connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT_MS || 60000),
 
-const testConnection = async () => {
+  ssl,
+});
+
+async function testConnection() {
   try {
-    const connection = await pool.getConnection();
-    console.log('✅ Database connected successfully');
-    connection.release();
-  } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
-    process.exit(1);
+    const conn = await pool.getConnection();
+    await conn.ping();
+    conn.release();
+    console.log('✅ Database connection OK');
+  } catch (err) {
+    console.error('❌ Database connection failed:', err.message);
+    throw err;
   }
-};
+}
 
 module.exports = { pool, testConnection };
