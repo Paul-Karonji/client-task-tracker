@@ -1,8 +1,10 @@
+// backend/server.js
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const { testConnection } = require('./config/database');
@@ -30,7 +32,7 @@ app.use(
   })
 );
 
-// Rate limiting
+// Rate limiting (applies to API routes)
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_MAX) || 100,
@@ -46,7 +48,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({
     success: true,
     message: 'Server is running',
@@ -58,13 +60,19 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/tasks', taskRoutes);
 
-// ---- 👉 Serve React frontend build (only after API routes) ----
-app.use(express.static(path.join(__dirname, '../frontend/build')));
-
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
-});
-// ---------------------------------------------------------------
+// --- Serve frontend build ONLY IF it exists (backend-only friendly) ---
+const buildDir = path.join(__dirname, '../frontend/build');
+if (fs.existsSync(buildDir)) {
+  app.use(express.static(buildDir));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(buildDir, 'index.html'));
+  });
+} else {
+  // Backend-only root route so hitting the service URL is friendly
+  app.get('/', (_req, res) => {
+    res.status(200).send('API is running (backend-only deploy)');
+  });
+}
 
 // 404 handler
 app.use(notFound);
