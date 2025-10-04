@@ -149,6 +149,14 @@ const TaskTracker = () => {
     });
     setEditingTask(task.id);
     setShowForm(true);
+    
+    // Smooth scroll to form after a brief delay to let it render
+    setTimeout(() => {
+      const formElement = document.getElementById('task-form');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const handleDelete = async (taskId) => {
@@ -259,6 +267,12 @@ const TaskTracker = () => {
                 onClick={() => {
                   resetForm();
                   setShowForm(true);
+                  setTimeout(() => {
+                    const formElement = document.getElementById('task-form');
+                    if (formElement) {
+                      formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }, 100);
                 }}
                 disabled={!isOnline}
                 className={`px-6 py-2.5 rounded-full font-medium flex items-center gap-2 transition-all transform hover:scale-105 ${
@@ -345,7 +359,7 @@ const TaskTracker = () => {
 
         {/* Task Form */}
         {showForm && (
-          <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-100">
+          <div id="task-form" className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
               {editingTask ? <Edit2 size={24} className="text-indigo-600" /> : <Plus size={24} className="text-indigo-600" />}
               {editingTask ? 'Edit Task' : 'Create New Task'}
@@ -500,6 +514,12 @@ const TaskTracker = () => {
                   onClick={() => {
                     resetForm();
                     setShowForm(true);
+                    setTimeout(() => {
+                      const formElement = document.getElementById('task-form');
+                      if (formElement) {
+                        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
                   }}
                   disabled={!isOnline}
                   className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all transform hover:scale-105"
