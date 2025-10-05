@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, DollarSign, Calendar, User, CheckCircle, XCircle, AlertCircle, Wifi, WifiOff, TrendingUp, Clock, Search, Filter } from 'lucide-react';
+import { Plus, Edit2, Trash2, DollarSign, Calendar, User, CheckCircle, XCircle, AlertCircle, Wifi, WifiOff, TrendingUp, Clock, Search, Filter, Eye, EyeOff } from 'lucide-react';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://client-task-tracker.onrender.com/api';
 
@@ -56,6 +56,7 @@ const TaskTracker = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [hideAmounts, setHideAmounts] = useState(false);
   const [formData, setFormData] = useState({
     clientName: '',
     taskDescription: '',
@@ -203,6 +204,9 @@ const TaskTracker = () => {
   };
 
   const formatCurrency = (amount) => {
+    if (hideAmounts) {
+      return '••••••';
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
@@ -263,6 +267,13 @@ const TaskTracker = () => {
                 {isOnline ? <Wifi size={18} /> : <WifiOff size={18} />}
                 <span className="font-medium">{isOnline ? 'Online' : 'Offline'}</span>
               </div>
+              <button
+                onClick={() => setHideAmounts(!hideAmounts)}
+                className="p-2.5 bg-white/20 hover:bg-white/30 rounded-full transition-all"
+                title={hideAmounts ? 'Show amounts' : 'Hide amounts'}
+              >
+                {hideAmounts ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
               <button
                 onClick={() => {
                   resetForm();
